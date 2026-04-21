@@ -5,5 +5,5 @@ metadata:
 data:
   config.json: |
     {
-      "message": "Bonjour depuis le ConfigMap !"
+      "message": "Mis à jour via GitOps !"
     }
