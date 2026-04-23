@@ -14,29 +14,36 @@ spec:
     spec:
       imagePullSecrets:
         - name: dockerhub-secret
+      initContainers:
+        - name: fetch-secrets
+          image: alpine/git
+          command:
+            - sh
+            - -c
+            - git clone https://github.com/mbidoyen/k8s-secrets.git /secrets-repo && cp /secrets-repo/secrets.env /secrets/secrets.env
+          volumeMounts:
+            - name: secrets-volume
+              mountPath: /secrets
       containers:
         - name: k8s-app
           image: dockerazariel/k8s-app:v1
+          command:
+            - sh
+            - -c
+            - export $(cat /secrets/secrets.env) && node app.js
           ports:
             - containerPort: 3000
           volumeMounts:
             - name: config-volume
               mountPath: /app/config
-          env:
-            - name: DB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: app-secret
-                  key: DB_USER
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: app-secret
-                  key: DB_PASSWORD
+            - name: secrets-volume
+              mountPath: /secrets
       volumes:
         - name: config-volume
           configMap:
             name: app-config
+        - name: secrets-volume
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
